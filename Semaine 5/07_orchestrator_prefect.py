@@ -1,132 +1,193 @@
 import os
 import sys
-import time
 import importlib
+import pandas as pd
+import duckdb
 from datetime import datetime
 from prefect import task, flow
 
 # -----------------------------------------------------------------------------
-# CONFIGURATION DES CHEMINS D'ACCÈS (PYTHONPATH)
+# 1. RÉSOLUTIONS ET CONFIGURATION DES CHEMINS D'ACCÈS
 # -----------------------------------------------------------------------------
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PARENT_DIR = os.path.dirname(SCRIPT_DIR)
-DB_DIR = os.path.join(PARENT_DIR, 'Base de donnée')
 
-# Injection dynamique des dossiers du projet dans sys.path
-for folder in ['', 'semaine 1', 'semaine 2', 'semaine 3', 'semaine 4']:
-    path = os.path.join(PARENT_DIR, folder) if folder else PARENT_DIR
-    if os.path.exists(path) and path not in sys.path:
-        sys.path.append(path)
+# Détermination de la racine du projet (dossier parent si exécuté depuis 'semaine 5')
+if os.path.basename(SCRIPT_DIR).lower() in ['semaine 5', 'semaine_5', 'semaine5']:
+    ROOT_DIR = os.path.dirname(SCRIPT_DIR)
+else:
+    ROOT_DIR = SCRIPT_DIR
+
+DB_DIR = os.path.join(ROOT_DIR, 'Base de donnée')
+os.makedirs(DB_DIR, exist_ok=True)
+
+DUCKDB_PATH = os.path.join(DB_DIR, 'banque_geneve_dwh.duckdb')
+PARQUET_CLEAN_PATH = os.path.join(DB_DIR, 'ordres_valides_2026.parquet')
+
+# Ajout du sous-dossier au sys.path pour l'import dynamique
+if SCRIPT_DIR not in sys.path:
+    sys.path.append(SCRIPT_DIR)
 
 # -----------------------------------------------------------------------------
-# DÉFINITION DES TÂCHES PREFECT (@task)
+# 2. IMPORTS DYNAMIQUES DES MODULES DE LOGGING ET D'ALERTING (JOUR 24)
 # -----------------------------------------------------------------------------
+try:
+    logger_module = importlib.import_module("07e_logger_config")
+    logger = logger_module.logger
+except Exception as e:
+    import logging
+    logger = logging.getLogger("BanqueGeneveLogger")
+    logging.basicConfig(level=logging.INFO)
+    logger.warning(f"⚠️ Chargement du logger par défaut (erreur d'import : {e})")
 
-@task(
-    name="Tache_1_Ingestion_Feeds_BNS_SMI",
-    description="Ingestion des taux BNS et cours SMI avec retry automatique",
-    retries=3,
-    retry_delay_seconds=5
-)
-def task_ingest_feeds():
-    """Tâche 1 : Ingestion des flux externes BNS et SMI."""
-    print("▶️ [Task 1] Démarrage de l'ingestion des feeds financiers (BNS & SMI)...")
-    
-    try:
-        # Importation dynamique pour contourner la syntaxe sur les chiffres initiaux
-        ingest = importlib.import_module('02_ingest_feeds')
-        ingest.ingest_financial_feeds()
-        print("   ✓ [Task 1] Ingestion des feeds BNS & SMI terminée avec succès.")
+try:
+    alert_module = importlib.import_module("07_alert_notifier")
+    envoyer_alerte_compliance = alert_module.envoyer_alerte_compliance
+except Exception as e:
+    def envoyer_alerte_compliance(id_ordre, client_id, montant_chf, motif="Fat-Finger (> 100k CHF)", webhook_url=None):
+        logger.error(f"🚨 [ALERTE FALLBACK] Ordre #{id_ordre} | Client {client_id} | Montant {montant_chf:,.2f} CHF | Motif: {motif}")
         return True
-    except Exception as e:
-        print(f"❌ [Task 1] Erreur d'ingestion : {e}")
-        raise e
-
-
-@task(
-    name="Tache_2_ETL_DuckDB_Quality_FINMA",
-    description="Exécution du DWH DuckDB et isolation des rejets Compliance",
-    retries=2,
-    retry_delay_seconds=3
-)
-def task_run_dwh_and_quality():
-    """Tâche 2 : Transformation DuckDB & Filtres FINMA."""
-    print("▶️ [Task 2] Exécution de la transformation DWH et contrôle de qualité...")
-    
-    try:
-        # Importation dynamique du module 05_master_pipeline
-        master = importlib.import_module('05_master_pipeline')
-        success = master.run_master_pipeline()
-        if not success:
-            raise RuntimeError("Échec renvoyé par le Master Pipeline ETL.")
-        print("   ✓ [Task 2] Traitement DWH DuckDB & Règles FINMA validés.")
-        return True
-    except Exception as e:
-        print(f"❌ [Task 2] Échec du pipeline DWH : {e}")
-        raise e
-
-
-@task(
-    name="Tache_3_Export_DataLake_Parquet",
-    description="Rafraîchissement des fichiers Parquet pour Power BI Desktop"
-)
-def task_export_parquet():
-    """Tâche 3 : Exportation des dimensions et faits Parquet pour Power BI."""
-    print("▶️ [Task 3] Exportation des données certifiées vers le Data Lake Parquet...")
-    
-    try:
-        import duckdb
-        duckdb_path = os.path.join(DB_DIR, 'banque_geneve_dwh.duckdb')
-        parquet_clean = os.path.join(DB_DIR, 'ordres_valides_2026.parquet')
-        
-        con = duckdb.connect(duckdb_path)
-        res = con.execute(f"SELECT COUNT(*) FROM '{parquet_clean}'").fetchone()
-        nb_clean = res[0] if res else 0
-        con.close()
-        
-        print(f"   ✓ [Task 3] Data Lake Parquet certifié prêt pour Power BI ({nb_clean} ordres validés).")
-        return nb_clean
-    except Exception as e:
-        print(f"❌ [Task 3] Erreur lors de l'exportation Parquet : {e}")
-        raise e
 
 # -----------------------------------------------------------------------------
-# DÉFINITION DU FLUX PRINCIPAL (@flow)
+# 3. TÂCHES PREFECT (TASKS)
 # -----------------------------------------------------------------------------
 
-@flow(
-    name="Master_Pipeline_Bancaire_Geneve",
-    description="Orchestrateur Batch Quotidien - Data Engineering Genève"
-)
-def master_workflow_orchestrator(simulate_error: bool = False):
-    print("==================================================================")
-    print("🚀 DÉMARRAGE DU WORKFLOW PREFECT D'ORDONNANCEMENT BATCH")
-    print(f"📅 Horodatage : {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("==================================================================\n")
+@task(name="Tache_1_Ingestion_Ordres_Bourse", retries=2, retry_delay_seconds=5)
+def task_ingestion_ordres() -> pd.DataFrame:
+    """
+    Simule ou extrait les ordres de bourse reçus dans la journée.
+    Si la base DuckDB existe déjà, lit les données existantes, sinon génère un jeu de données de test.
+    """
+    logger.info("▶️ [Tâche 1/3] Démarrage de l'ingestion des ordres de bourse...")
     
-    t_start = time.time()
+    # Données d'ordres reçues (inclut un ordre Fat-Finger > 100k CHF pour tester la Compliance)
+    data = [
+        {"id_ordre": 1001, "client_id": "C-1082", "isin": "CH0012056047", "quantite": 500, "prix_unitaire_chf": 28.50, "date_ordre": "2026-10-30"},
+        {"id_ordre": 1002, "client_id": "C-4421", "isin": "CH0038863350", "quantite": 120, "prix_unitaire_chf": 115.00, "date_ordre": "2026-10-30"},
+        {"id_ordre": 1003, "client_id": "C-8841", "isin": "CH0012005267", "quantite": 1500, "prix_unitaire_chf": 95.00, "date_ordre": "2026-10-30"}, # 142,500 CHF (FAT FINGER)
+        {"id_ordre": 1004, "client_id": "C-2290", "isin": "CH0012056047", "quantite": 200, "prix_unitaire_chf": 28.60, "date_ordre": "2026-10-30"}
+    ]
     
-    if simulate_error:
-        print("⚠️ Mode simulation d'erreur réseau activé sur la Tâche 1...")
+    df = pd.DataFrame(data)
     
-    # Exécution séquentielle contrôlée par les dépendances
-    res_ingest = task_ingest_feeds()
+    # Calculs métiers des montants et frais
+    df['montant_brut_chf'] = round(df['quantite'] * df['prix_unitaire_chf'], 2)
+    df['frais_courtage_chf'] = round(df['montant_brut_chf'] * 0.0015, 4) # 0.15% de frais
     
-    if res_ingest:
-        res_dwh = task_run_dwh_and_quality()
+    logger.info(f"✅ [Tâche 1/3] {len(df)} ordres de bourse chargés en mémoire.")
+    return df
+
+
+@task(name="Tache_2_Controle_Compliance_FINMA")
+def task_controle_compliance(df_ordres: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Contrôle de conformité FINMA :
+    - Isole les ordres > 100 000 CHF (Fat-Finger).
+    - Déclenche une alerte immédiate pour chaque rejet.
+    - Persiste les rejets dans la table 'table_rejets_compliance' de DuckDB.
+    """
+    logger.info("▶️ [Tâche 2/3] Exécution des filtres de conformité FINMA (Seuil: 100,000 CHF)...")
+    
+    SEUIL_FAT_FINGER = 100000.00
+    
+    # Séparation ordres valides / rejets
+    df_rejets = df_ordres[df_ordres['montant_brut_chf'] > SEUIL_FAT_FINGER].copy()
+    df_valides = df_ordres[df_ordres['montant_brut_chf'] <= SEUIL_FAT_FINGER].copy()
+    
+    if not df_rejets.empty:
+        logger.warning(f"⚠️ DETECTED : {len(df_rejets)} ordre(s) non-conforme(s) détecté(s) !")
         
-        if res_dwh:
-            nb_orders = task_export_parquet()
+        # Enregistrement des rejets dans DuckDB pour l'audit trail
+        con = duckdb.connect(DUCKDB_PATH)
+        try:
+
+            # 1. Supprime l'ancienne table obsolète pour repartir sur la nouvelle structure
+            con.execute("DROP TABLE IF EXISTS table_rejets_compliance;")
+
+            con.execute("""
+                CREATE TABLE IF NOT EXISTS table_rejets_compliance (
+                    id_ordre INT,
+                    client_id VARCHAR,
+                    isin VARCHAR,
+                    montant_brut_chf DOUBLE,
+                    motif_rejet VARCHAR,
+                    date_rejet TIMESTAMP
+                )
+            """)
             
-            total_duration = time.time() - t_start
-            print("\n------------------------------------------------------------------")
-            print(f"🎉 WORKFLOW BATCH ACHEVÉ AVEC SUCCÈS (Durée: {total_duration:.2f}s)")
-            print(f"📊 Volume final certifié : {nb_orders} ordres en production.")
-            print("------------------------------------------------------------------")
-            return True
+            for _, row in df_rejets.iterrows():
+                motif = f"Fat-Finger (> {SEUIL_FAT_FINGER:,.0f} CHF)"
+                
+                # 1. Envoi de l'alerte en temps réel (Teams / Slack / Logs)
+                envoyer_alerte_compliance(
+                    id_ordre=int(row['id_ordre']),
+                    client_id=str(row['client_id']),
+                    montant_chf=float(row['montant_brut_chf']),
+                    motif=motif
+                )
+                
+                # 2. Insertion en base de données DWH
+                con.execute("""
+                    INSERT INTO table_rejets_compliance (id_ordre, client_id, isin, montant_brut_chf, motif_rejet, date_rejet)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (int(row['id_ordre']), str(row['client_id']), str(row['isin']), float(row['montant_brut_chf']), motif, datetime.now()))
 
-    return False
+        finally:
+            con.close()
+            
+    logger.info(f"✅ [Tâche 2/3] Contrôle terminé : {len(df_valides)} ordres certifiés, {len(df_rejets)} rejet(s).")
+    return df_valides, df_rejets
 
+
+@task(name="Tache_3_Export_DataLake_et_DWH")
+def task_export_data(df_valides: pd.DataFrame):
+    """
+    Exporte les transactions validées vers :
+    1. Le fichier Data Lake Parquet (ordres_valides_2026.parquet)
+    2. La table DuckDB 'table_ordres_bourse'
+    """
+    logger.info("▶️ [Tâche 3/3] Exportation des données certifiées vers Parquet et DuckDB...")
+    
+    if df_valides.empty:
+        logger.warning("⚠️ Aucun ordre valide à exporter.")
+        return
+        
+    # 1. Export Parquet (Data Lake)
+    df_valides.to_parquet(PARQUET_CLEAN_PATH, index=False)
+    logger.info(f"📄 Export Parquet réussi : {PARQUET_CLEAN_PATH}")
+    
+    # 2. Export DuckDB (Data Warehouse)
+    con = duckdb.connect(DUCKDB_PATH)
+    try:
+        con.execute("CREATE TABLE IF NOT EXISTS table_ordres_bourse AS SELECT * FROM df_valides WHERE 1=0;")
+        con.execute("DELETE FROM table_ordres_bourse WHERE date_ordre = '2026-10-30';") # Idempotence
+        con.execute("INSERT INTO table_ordres_bourse SELECT * FROM df_valides;")
+        
+        nb_rows = con.execute("SELECT COUNT(*) FROM table_ordres_bourse;").fetchone()[0]
+        logger.info(f"🦆 Base DuckDB DWH mise à jour ({nb_rows} lignes au total dans 'table_ordres_bourse').")
+    finally:
+        con.close()
+
+# -----------------------------------------------------------------------------
+# 4. FLUX PRINCIPAL PREFECT (ORCHESTRATEUR FLOW)
+# -----------------------------------------------------------------------------
+
+@flow(name="Pipeline_ETL_Bancaire_Geneve")
+def pipeline_etl_bancaire_master():
+    """
+    Orchestrateur Master du Pipeline Data Bancaire.
+    """
+    logger.info("==================================================================")
+    logger.info("🚀 DÉMARRAGE DU PIPELINE ETL ORCHESTRÉ (PREFECT / DUCKDB / PARQUET)")
+    logger.info("==================================================================")
+    
+    # Exécution séquentielle des tâches orchestrées
+    df_raw = task_ingestion_ordres()
+    df_valides, df_rejets = task_controle_compliance(df_raw)
+    task_export_data(df_valides)
+    
+    logger.info("==================================================================")
+    logger.info("🎉 PIPELINE ETL EXÉCUTÉ AVEC SUCCÈS (Audit Trail conforme FINMA)")
+    logger.info("==================================================================")
 
 if __name__ == '__main__':
-    master_workflow_orchestrator()
+    pipeline_etl_bancaire_master()

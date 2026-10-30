@@ -1,0 +1,40 @@
+[2026-10-30 15:52:59] [INFO] [07e_logger_config.py:43] - ▶️ Test initial du logger structuré.
+[2026-10-30 15:52:59] [WARNING] [07e_logger_config.py:44] - ⚠️ Message d'avertissement de test.
+[2026-10-30 15:52:59] [ERROR] [07e_logger_config.py:45] - ❌ Message d'erreur simulé.
+[2026-10-30 15:58:53] [ERROR] [07f_alert_notifier.py:30] - 🚨 ALERTE DISPACHÉE : Ordre #9901 | Client C-8841 | Montant 145,000.00 CHF | Motif: Fat-Finger (> 100k CHF)
+[2026-10-30 15:58:53] [INFO] [07f_alert_notifier.py:45] - ℹ️ Mode Simulation Alerting : Aucun Webhook configuré, alerte enregistrée dans les logs.
+[2026-10-30 16:01:36] [ERROR] [07f_alert_notifier.py:30] - 🚨 ALERTE DISPACHÉE : Ordre #9999 | Client C-TEST | Montant 150,000.00 CHF | Motif: Fat-Finger (> 100k CHF)
+[2026-10-30 16:01:36] [INFO] [07f_alert_notifier.py:45] - ℹ️ Mode Simulation Alerting : Aucun Webhook configuré, alerte enregistrée dans les logs.
+[2026-10-30 16:02:09] [ERROR] [07f_alert_notifier.py:30] - 🚨 ALERTE DISPACHÉE : Ordre #9999 | Client C-TEST | Montant 150,000.00 CHF | Motif: Fat-Finger (> 100k CHF)
+[2026-10-30 16:02:09] [INFO] [07f_alert_notifier.py:45] - ℹ️ Mode Simulation Alerting : Aucun Webhook configuré, alerte enregistrée dans les logs.
+[2026-10-30 16:03:50] [ERROR] [07f_alert_notifier.py:30] - 🚨 ALERTE DISPACHÉE : Ordre #9999 | Client C-TEST | Montant 150,000.00 CHF | Motif: Fat-Finger (> 100k CHF)
+[2026-10-30 16:03:50] [INFO] [07f_alert_notifier.py:45] - ℹ️ Mode Simulation Alerting : Aucun Webhook configuré, alerte enregistrée dans les logs.
+[2026-10-30 16:03:57] [ERROR] [07f_alert_notifier.py:30] - 🚨 ALERTE DISPACHÉE : Ordre #9999 | Client C-TEST | Montant 150,000.00 CHF | Motif: Fat-Finger (> 100k CHF)
+[2026-10-30 16:03:57] [INFO] [07f_alert_notifier.py:45] - ℹ️ Mode Simulation Alerting : Aucun Webhook configuré, alerte enregistrée dans les logs.
+[2026-10-30 16:16:40] [INFO] [07_orchestrator_prefect.py:179] - ==================================================================
+[2026-10-30 16:16:40] [INFO] [07_orchestrator_prefect.py:180] - 🚀 DÉMARRAGE DU PIPELINE ETL ORCHESTRÉ (PREFECT / DUCKDB / PARQUET)
+[2026-10-30 16:16:40] [INFO] [07_orchestrator_prefect.py:181] - ==================================================================
+[2026-10-30 16:16:40] [INFO] [07_orchestrator_prefect.py:60] - ▶️ [Tâche 1/3] Démarrage de l'ingestion des ordres de bourse...
+[2026-10-30 16:16:40] [INFO] [07_orchestrator_prefect.py:76] - ✅ [Tâche 1/3] 4 ordres de bourse chargés en mémoire.
+[2026-10-30 16:16:40] [INFO] [07_orchestrator_prefect.py:88] - ▶️ [Tâche 2/3] Exécution des filtres de conformité FINMA (Seuil: 100,000 CHF)...
+[2026-10-30 16:16:40] [WARNING] [07_orchestrator_prefect.py:97] - ⚠️ DETECTED : 1 ordre(s) non-conforme(s) détecté(s) !
+[2026-10-30 16:16:40] [ERROR] [07_orchestrator_prefect.py:47] - 🚨 [ALERTE FALLBACK] Ordre #1003 | Client C-8841 | Montant 142,500.00 CHF | Motif: Fat-Finger (> 100,000 CHF)
+[2026-10-30 16:16:40] [INFO] [07_orchestrator_prefect.py:137] - ✅ [Tâche 2/3] Contrôle terminé : 3 ordres certifiés, 1 rejet(s).
+[2026-10-30 16:16:40] [INFO] [07_orchestrator_prefect.py:148] - ▶️ [Tâche 3/3] Exportation des données certifiées vers Parquet et DuckDB...
+[2026-10-30 16:22:43] [INFO] [07_orchestrator_prefect.py:179] - ==================================================================
+[2026-10-30 16:22:43] [INFO] [07_orchestrator_prefect.py:180] - 🚀 DÉMARRAGE DU PIPELINE ETL ORCHESTRÉ (PREFECT / DUCKDB / PARQUET)
+[2026-10-30 16:22:43] [INFO] [07_orchestrator_prefect.py:181] - ==================================================================
+[2026-10-30 16:22:43] [INFO] [07_orchestrator_prefect.py:60] - ▶️ [Tâche 1/3] Démarrage de l'ingestion des ordres de bourse...
+[2026-10-30 16:22:43] [INFO] [07_orchestrator_prefect.py:76] - ✅ [Tâche 1/3] 4 ordres de bourse chargés en mémoire.
+[2026-10-30 16:22:43] [INFO] [07_orchestrator_prefect.py:88] - ▶️ [Tâche 2/3] Exécution des filtres de conformité FINMA (Seuil: 100,000 CHF)...
+[2026-10-30 16:22:43] [WARNING] [07_orchestrator_prefect.py:97] - ⚠️ DETECTED : 1 ordre(s) non-conforme(s) détecté(s) !
+[2026-10-30 16:22:43] [ERROR] [07_orchestrator_prefect.py:47] - 🚨 [ALERTE FALLBACK] Ordre #1003 | Client C-8841 | Montant 142,500.00 CHF | Motif: Fat-Finger (> 100,000 CHF)
+[2026-10-30 16:22:43] [INFO] [07_orchestrator_prefect.py:137] - ✅ [Tâche 2/3] Contrôle terminé : 3 ordres certifiés, 1 rejet(s).
+[2026-10-30 16:22:43] [INFO] [07_orchestrator_prefect.py:148] - ▶️ [Tâche 3/3] Exportation des données certifiées vers Parquet et DuckDB...
+[2026-10-30 16:22:43] [INFO] [07_orchestrator_prefect.py:156] - 📄 Export Parquet réussi : c:\Users\AlessandroCarcione\python src\AtelierCitizenDev_Project\Base de donnée\ordres_valides_2026.parquet
+[2026-10-30 16:22:43] [INFO] [07_orchestrator_prefect.py:166] - 🦆 Base DuckDB DWH mise à jour (3 lignes au total dans 'table_ordres_bourse').
+[2026-10-30 16:22:43] [INFO] [07_orchestrator_prefect.py:188] - ==================================================================
+[2026-10-30 16:22:43] [INFO] [07_orchestrator_prefect.py:189] - 🎉 PIPELINE ETL EXÉCUTÉ AVEC SUCCÈS (Audit Trail conforme FINMA)
+[2026-10-30 16:22:43] [INFO] [07_orchestrator_prefect.py:190] - ==================================================================
+[2026-10-30 16:23:54] [ERROR] [07f_alert_notifier.py:30] - 🚨 ALERTE DISPACHÉE : Ordre #9999 | Client C-TEST | Montant 150,000.00 CHF | Motif: Fat-Finger (> 100k CHF)
+[2026-10-30 16:23:54] [INFO] [07f_alert_notifier.py:45] - ℹ️ Mode Simulation Alerting : Aucun Webhook configuré, alerte enregistrée dans les logs.
