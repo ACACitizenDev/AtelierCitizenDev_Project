@@ -1,2 +1,2 @@
 # AtelierCitizenDev_Project
-Atelier CitizenDev avec Project a terme permettant de demontrer les compétences acquises
+Divers ateliers CitizenDev avant Project a terme permettant de démontrer les compétences acquises
