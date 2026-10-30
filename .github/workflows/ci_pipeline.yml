@@ -1,0 +1,35 @@
+name: Data Pipeline CI/CD Quality Gate
+
+# Déclenchement automatique lors de tout Push ou Pull Request sur la branche principale
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  quality_gate_job:
+    name: Exécution des Tests PyTest & Validation Quality Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Récupération du code source
+      - name: Récupération du code source Git
+        uses: actions/checkout@v3
+
+      # 2. Configuration de l'environnement Python
+      - name: Configuration de Python 3.15
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.15'
+
+      # 3. Installation des dépendances
+      - name: Installation des paquets Python
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # 4. Exécution de la suite de tests
+      - name: Exécution des contrôles de qualité PyTest
+        run: |
+          pytest tests/ --verbose
