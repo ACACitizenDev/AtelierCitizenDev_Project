@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  pipeline_bancaire:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pipeline_bancaire_container
+    restart: "no"
+    environment:
+      - ENV_TYPE=PRODUCTION
+      - SEUIL_ALERT_CHF=100000
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # Montage du dossier de base de données pour persister DuckDB et Parquet sur l'hôte
+      - ./Base de donnée:/app/Base de donnée

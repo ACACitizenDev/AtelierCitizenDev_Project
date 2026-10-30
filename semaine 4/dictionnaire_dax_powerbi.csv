@@ -1,0 +1,6 @@
+﻿Nom_Mesure,Table,Formule_DAX,Description,Format,Conformite_FINMA
+AuM Total CHF,_Mesures,SUM(fact_ordres_bourse[montant_brut_chf]),Total des capitaux engagés sur les ordres de bourse validés (CHF).,"Devise (CHF, 2 décimales)",Oui
+Total Ordres Executes,_Mesures,COUNTROWS(fact_ordres_bourse),Nombre total de transactions boursières exécutées.,Nombre entier,Oui
+Commissions Courtage CHF,_Mesures,SUM(fact_ordres_bourse[frais_courtage_chf]),Somme des frais de courtage prélevés par la banque (0.15%).,"Devise (CHF, 2 décimales)",Oui
+AuM YTD CHF,_Mesures,"TOTALYTD([AuM Total CHF], Dim_Date[Date])",Cumul annuel glissant des AuM sur l'exercice en cours.,"Devise (CHF, 2 décimales)",Oui
+Variation MoM %,_Mesures,"DIVIDE([Variation MoM CHF], [AuM Mois Precedent], 0)",Taux de croissance des AuM par rapport au mois précédent.,Pourcentage (0.0%),Oui

@@ -1,0 +1,17 @@
+# Exclure les environnements virtuels et répertoires système
+.venv/
+venv/
+ENV/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Exclure les dossiers de contrôle de version
+.git/
+.github/
+.vscode/
+
+# Exclure les fichiers temporaires et sous-dossiers de travail
+scratch/
+*.log
