@@ -1,0 +1,6 @@
+[2026-11-02 11:03:06] [ERROR] [07f_alert_notifier.py:30] - 🚨 ALERTE DISPACHÉE : Ordre #9999 | Client C-TEST-J24 | Montant 150,000.00 CHF | Motif: Test Unitaire PyTest
+[2026-11-02 11:03:06] [INFO] [07f_alert_notifier.py:45] - ℹ️ Mode Simulation Alerting : Aucun Webhook configuré, alerte enregistrée dans les logs.
+[2026-11-02 11:51:23] [ERROR] [07f_alert_notifier.py:30] - 🚨 ALERTE DISPACHÉE : Ordre #9999 | Client C-TEST-J24 | Montant 150,000.00 CHF | Motif: Test Unitaire PyTest
+[2026-11-02 11:51:23] [INFO] [07f_alert_notifier.py:45] - ℹ️ Mode Simulation Alerting : Aucun Webhook configuré, alerte enregistrée dans les logs.
+[2026-11-02 11:51:43] [ERROR] [07f_alert_notifier.py:30] - 🚨 ALERTE DISPACHÉE : Ordre #9999 | Client C-TEST-J24 | Montant 150,000.00 CHF | Motif: Test Unitaire PyTest
+[2026-11-02 11:51:43] [INFO] [07f_alert_notifier.py:45] - ℹ️ Mode Simulation Alerting : Aucun Webhook configuré, alerte enregistrée dans les logs.
